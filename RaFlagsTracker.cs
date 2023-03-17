@@ -21,10 +21,7 @@ public class RaFlagsTracker : IDisposable
 
 	public IReadOnlyCollection<object> Flags => _flags;
 
-	public bool IsEmpty => !HasFlags;
-	public bool HasFlags => _flags.Count > 0;
-
-	public bool HasFlags(params object[] flagsToExclude)
+	public bool IsEmpty(params object[] flagsToExclude)
 	{
 		if(flagsToExclude != null && flagsToExclude.Length > 0)
 		{
@@ -33,17 +30,12 @@ public class RaFlagsTracker : IDisposable
 			{
 				temp.Remove(flagsToExclude[i]);
 			}
-			return temp.Count > 0;
+			return temp.Count == 0;
 		}
 		else
 		{
-			return HasFlags;
+			return _flags.Count == 0;
 		}
-	}
-
-	public bool IsEmpty(params object[] flagsToExclude)
-	{
-		return !HasFlags(flagsToExclude);
 	}
 
 	public bool HasNone(object[] flags)
@@ -110,7 +102,9 @@ public class RaFlagsTracker : IDisposable
 			_flagsChangedCallback?.Invoke(flag, this);
 			FlagRegisteredEvent?.Invoke(flag, this);
 			FlagsChangedEvent?.Invoke(flag, this);
+			return true;
 		}
+		return false;
 	}
 
 	public bool Unregister(object flag)
@@ -120,7 +114,9 @@ public class RaFlagsTracker : IDisposable
 			_flagsChangedCallback?.Invoke(flag, this);
 			FlagUnregisteredEvent?.Invoke(flag, this);
 			FlagsChangedEvent?.Invoke(flag, this);
+			return true;
 		}
+		return false;
 	}
 
 	public void Clear()
