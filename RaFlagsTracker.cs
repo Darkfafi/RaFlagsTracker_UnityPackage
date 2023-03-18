@@ -6,17 +6,20 @@ namespace RaFlags
 	public class RaFlagsTracker : IDisposable
 	{
 		public delegate void FlagHandler(object flag, RaFlagsTracker tracker);
+		public delegate void IsEmptyHandler(bool isEmpty, RaFlagsTracker tracker);
+
 		public event FlagHandler FlagRegisteredEvent;
 		public event FlagHandler FlagUnregisteredEvent;
 		public event FlagHandler FlagsChangedEvent;
+		public event IsEmptyHandler IsEmptyChangedEvent;
 
 		private HashSet<object> _flags = new HashSet<object>();
 
-		private FlagHandler _flagsChangedCallback = null;
+		private IsEmptyHandler _isEmptyChangedCallback = null;
 
-		public RaFlagsTracker(FlagHandler flagsChangedCallback = null)
+		public RaFlagsTracker(IsEmptyHandler isEmptyChangedCallback = null)
 		{
-			_flagsChangedCallback = flagsChangedCallback;
+			_isEmptyChangedCallback = isEmptyChangedCallback;
 		}
 
 		public IReadOnlyCollection<object> Flags => _flags;
@@ -97,11 +100,24 @@ namespace RaFlags
 
 		public bool Register(object flag)
 		{
+			bool isEmpty = IsEmpty();
 			if(_flags.Add(flag))
 			{
-				_flagsChangedCallback?.Invoke(flag, this);
+				bool newIsEmptyState = IsEmpty();
+				bool hasChanged = isEmpty != newIsEmptyState;
+
+				if(hasChanged)
+				{
+					_isEmptyChangedCallback?.Invoke(newIsEmptyState, this);
+				}
+
 				FlagRegisteredEvent?.Invoke(flag, this);
 				FlagsChangedEvent?.Invoke(flag, this);
+
+				if(hasChanged)
+				{
+					IsEmptyChangedEvent?.Invoke(newIsEmptyState, this);
+				}
 				return true;
 			}
 			return false;
@@ -109,11 +125,24 @@ namespace RaFlags
 
 		public bool Unregister(object flag)
 		{
+			bool isEmpty = IsEmpty();
 			if(_flags.Remove(flag))
 			{
-				_flagsChangedCallback?.Invoke(flag, this);
+				bool newIsEmptyState = IsEmpty();
+				bool hasChanged = isEmpty != newIsEmptyState;
+
+				if(hasChanged)
+				{
+					_isEmptyChangedCallback?.Invoke(newIsEmptyState, this);
+				}
+
 				FlagUnregisteredEvent?.Invoke(flag, this);
 				FlagsChangedEvent?.Invoke(flag, this);
+
+				if(hasChanged)
+				{
+					IsEmptyChangedEvent?.Invoke(newIsEmptyState, this);
+				}
 				return true;
 			}
 			return false;
@@ -133,8 +162,9 @@ namespace RaFlags
 			FlagRegisteredEvent = null;
 			FlagUnregisteredEvent = null;
 			FlagsChangedEvent = null;
+			IsEmptyChangedEvent = null;
 
-			_flagsChangedCallback = null;
+			_isEmptyChangedCallback = null;
 			_flags.Clear();
 		}
 	}
