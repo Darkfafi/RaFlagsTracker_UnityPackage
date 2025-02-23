@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace RaFlags
 {
@@ -14,6 +15,8 @@ namespace RaFlags
 		public event IsEmptyHandler IsEmptyChangedEvent;
 
 		private HashSet<object> _flags = new HashSet<object>();
+		private bool _isLoggingEnabled = false;
+		private string _loggingTag = string.Empty;
 
 		private IsEmptyHandler _isEmptyChangedCallback = null;
 
@@ -23,6 +26,30 @@ namespace RaFlags
 		}
 
 		public IReadOnlyCollection<object> Flags => _flags;
+
+		public void EnableLogging(string tag)
+		{
+			if(_loggingTag == tag)
+			{
+				return;
+			}
+
+			_isLoggingEnabled = true;
+			_loggingTag = tag;
+			Log("Enabled Logging");
+		}
+
+		public void DisableLogging()
+		{
+			if(!_isLoggingEnabled)
+			{
+				return;
+			}
+
+			Log("Disabled Logging");
+			_isLoggingEnabled = false;
+			_loggingTag = default;
+		}
 
 		public bool IsEmpty(params object[] flagsToExclude)
 		{
@@ -106,6 +133,8 @@ namespace RaFlags
 				bool newIsEmptyState = IsEmpty();
 				bool hasChanged = isEmpty != newIsEmptyState;
 
+				Log($"Registered {flag}. HasChanged: {hasChanged}");
+
 				if(hasChanged)
 				{
 					_isEmptyChangedCallback?.Invoke(newIsEmptyState, this);
@@ -130,6 +159,8 @@ namespace RaFlags
 			{
 				bool newIsEmptyState = IsEmpty();
 				bool hasChanged = isEmpty != newIsEmptyState;
+
+				Log($"Unregister {flag}. HasChanged: {hasChanged}");
 
 				if(hasChanged)
 				{
@@ -166,6 +197,17 @@ namespace RaFlags
 
 			_isEmptyChangedCallback = null;
 			_flags.Clear();
+
+			_isLoggingEnabled = default;
+			_loggingTag = default;
+		}
+
+		private void Log(string message)
+		{
+			if(_isLoggingEnabled)
+			{
+				Debug.WriteLine($"{nameof(RaFlagsTracker)} - {_loggingTag}: {message}");
+			}
 		}
 	}
 }
