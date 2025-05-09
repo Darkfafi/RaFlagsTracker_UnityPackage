@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using UnityEngine;
 
 namespace RaFlags
 {
@@ -206,7 +206,7 @@ namespace RaFlags
 		{
 			if(_isLoggingEnabled)
 			{
-				Debug.WriteLine($"{nameof(RaFlagsTracker)} - {_loggingTag}: {message}");
+				Debug.Log($"{nameof(RaFlagsTracker)} - {_loggingTag}: {message}");
 			}
 		}
 	}
